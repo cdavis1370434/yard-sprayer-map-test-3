@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yard Sprayer Section Control V3</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #0f1419;
+    color: #eef5f7;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  header {
+    padding: 12px 14px;
+    background: #0a0f13;
+    border-bottom: 1px solid #33424d;
+  }
+  h1 { margin: 0; font-size: 18px; }
+  .sub { color: #9fb0bb; font-size: 12px; margin-top: 3px; }
+  .wrap {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 10px;
+    padding: 10px;
+  }
+  .panel, .mapPanel {
+    background: #1a222b;
+    border: 1px solid #33424d;
+    border-radius: 14px;
+    padding: 10px;
+  }
+  .mapPanel {
+    min-height: 520px;
+    position: relative;
+  }
+  canvas {
+    width: 100%;
+    height: 520px;
+    background: #0b1116;
+    border-radius: 10px;
+    border: 1px solid #33424d;
+    display: block;
+    touch-action: none;
+  }
+  .statusGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .tile {
+    background: #111920;
+    border: 1px solid #33424d;
+    border-radius: 12px;
+    padding: 10px;
+    min-height: 58px;
+  }
+  .label {
+    color: #9fb0bb;
+    font-size: 12px;
+  }
+  .value {
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 3px;
+  }
+  .on { color: #28d17c; }
+  .off { color: #ff5c5c; }
+  .warn { color: #ffbf47; }
+  .ok { color: #6bb7ff; }
+  button, input, select {
+    font: inherit;
+    background: #101820;
+    color: #eef5f7;
+    border: 1px solid #33424d;
+    border-radius: 10px;
+    padding: 10px;
+  }
+  button {
+    min-height: 48px;
+    background: #172431;
+  }
+  button:active {
+    transform: translateY(1px);
+    background: #243548;
+  }
+  .primary { background: #0f5f38; border-color: #19804e; }
+  .danger { background: #5a1919; border-color: #8a2a2a; }
+  .buttons2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  .buttons3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 100px;
+    gap: 8px;
+    align-items: center;
+    margin: 8px 0;
+  }
+  .row label { font-size: 13px; }
+  .note {
+    color: #9fb0bb;
+    font-size: 12px;
+    line-height: 1.35;
+    margin-top: 8px;
+  }
+  #errorBox {
+    display: none;
+    white-space: pre-wrap;
+    background: #401616;
+    border: 1px solid #923232;
+    color: #ffd6d6;
+    border-radius: 10px;
+    padding: 8px;
+    margin: 8px 0;
+    font-size: 12px;
+  }
+  @media (max-width: 800px) {
+    .wrap { grid-template-columns: 1fr; }
+    canvas { height: 58vh; min-height: 360px; }
+    .mapPanel { min-height: auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Yard Sprayer Section Control <span style="color:#9fb0bb;font-size:12px;">V3 iPad-safe simulator</span></h1>
+  <div class="sub">If the JavaScript tile stays “not running,” the file is being opened in a preview that blocks scripts.</div>
+</header>
+
+<div class="wrap">
+  <section class="panel">
+    <div id="errorBox"></div>
+
+    <div class="statusGrid">
+      <div class="tile">
+        <div class="label">JavaScript</div>
+        <div id="jsStatus" class="value warn">not running</div>
+      </div>
+      <div class="tile">
+        <div class="label">Simulator</div>
+        <div id="simStatus" class="value warn">starting</div>
+      </div>
+      <div class="tile">
+        <div class="label">Sprayer Command</div>
+        <div id="sprayStatus" class="value off">OFF</div>
+      </div>
+      <div class="tile">
+        <div class="label">Overlap Ahead</div>
+        <div id="overlapStatus" class="value">0%</div>
+      </div>
+    </div>
+
+    <div class="buttons2">
+      <button id="forwardBtn" class="primary">Forward</button>
+      <button id="stopBtn" class="danger">Stop</button>
+    </div>
+
+    <div class="buttons3">
+      <button id="leftBtn">← Left</button>
+      <button id="centerBtn">Center</button>
+      <button id="rightBtn">Right →</button>
+    </div>
+
+    <div class="buttons2">
+      <button id="clearBtn">Clear Coverage</button>
+      <button id="patchBtn">Paint Test Patch</button>
+    </div>
+
+    <div class="row">
+      <label for="sprayerWidth">Sprayer width, ft</label>
+      <input id="sprayerWidth" type="number" value="5" min="1" step="0.5">
+    </div>
+
+    <div class="row">
+      <label for="fakeSpeed">Fake speed, mph</label>
+      <input id="fakeSpeed" type="number" value="3" min="0" step="0.1">
+    </div>
+
+    <div class="row">
+      <label for="lookAhead">Look-ahead, ft</label>
+      <input id="lookAhead" type="number" value="8" min="1" step="1">
+    </div>
+
+    <div class="row">
+      <label for="cellSize">Grid cell, ft</label>
+      <input id="cellSize" type="number" value="1" min="0.5" step="0.5">
+    </div>
+
+    <div class="row">
+      <label for="offAt">Turn OFF overlap, %</label>
+      <input id="offAt" type="number" value="80" min="1" max="100" step="5">
+    </div>
+
+    <div class="row">
+      <label for="onAt">Turn ON below, %</label>
+      <input id="onAt" type="number" value="50" min="0" max="99" step="5">
+    </div>
+
+    <div class="row">
+      <label for="manualMode">Manual command</label>
+      <select id="manualMode">
+        <option value="auto">Auto</option>
+        <option value="on">Force ON</option>
+        <option value="off">Force OFF</option>
+      </select>
+    </div>
+
+    <div class="statusGrid" style="margin-top:10px;">
+      <div class="tile">
+        <div class="label">Speed</div>
+        <div id="speedReadout" class="value">0.0 mph</div>
+      </div>
+      <div class="tile">
+        <div class="label">Heading</div>
+        <div id="headingReadout" class="value">0°</div>
+      </div>
+      <div class="tile">
+        <div class="label">X</div>
+        <div id="xReadout" class="value">0 ft</div>
+      </div>
+      <div class="tile">
+        <div class="label">Y</div>
+        <div id="yReadout" class="value">0 ft</div>
+      </div>
+    </div>
+
+    <div class="note">
+      Test: tap <b>Forward</b>. The blue triangle should move and paint green coverage. Tap or hold Left/Right to steer. Driving back across green coverage should switch the command OFF.
+    </div>
+  </section>
+
+  <section class="mapPanel">
+    <canvas id="mapCanvas" width="900" height="600"></canvas>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function byId(id) { return document.getElementById(id); }
+
+  var el = {};
+  [
+    "jsStatus","simStatus","sprayStatus","overlapStatus","forwardBtn","stopBtn","leftBtn","rightBtn",
+    "centerBtn","clearBtn","patchBtn","sprayerWidth","fakeSpeed","lookAhead","cellSize","offAt","onAt",
+    "manualMode","speedReadout","headingReadout","xReadout","yReadout","mapCanvas","errorBox"
+  ].forEach(function (id) { el[id] = byId(id); });
+
+  window.onerror = function (message, source, lineno, colno) {
+    el.errorBox.style.display = "block";
+    el.errorBox.textContent = "JavaScript error:\n" + message + "\nLine: " + lineno + " Column: " + colno;
+  };
+
+  el.jsStatus.textContent = "running";
+  el.jsStatus.className = "value ok";
+
+  var ctx = el.mapCanvas.getContext("2d");
+
+  var pos = { x: 0, y: 0 };
+  var heading = 0; // 0 north/up, 90 east/right
+  var moving = false;
+  var holdTurn = 0;
+  var speedMph = 0;
+  var sprayOn = false;
+  var overlap = 0;
+  var coverage = {};
+  var view = { cx: 0, cy: 0, scale: 8 };
+  var lastTime = Date.now();
+
+  function num(id, fallback) {
+    var v = parseFloat(el[id].value);
+    return isFinite(v) ? v : fallback;
+  }
+
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+  function rad(deg) { return deg * Math.PI / 180; }
+
+  function forwardVector() {
+    var r = rad(heading);
+    return { x: Math.sin(r), y: Math.cos(r) };
+  }
+
+  function rightVector() {
+    var r = rad(heading);
+    return { x: Math.cos(r), y: -Math.sin(r) };
+  }
+
+  function key(ix, iy) { return ix + "," + iy; }
+
+  function cellAt(x, y) {
+    var cs = Math.max(0.25, num("cellSize", 1));
+    return { ix: Math.floor(x / cs), iy: Math.floor(y / cs) };
+  }
+
+  function mark(x, y) {
+    var c = cellAt(x, y);
+    coverage[key(c.ix, c.iy)] = true;
+  }
+
+  function covered(x, y) {
+    var c = cellAt(x, y);
+    return !!coverage[key(c.ix, c.iy)];
+  }
+
+  function markSwath(x, y) {
+    var width = Math.max(0.5, num("sprayerWidth", 5));
+    var cs = Math.max(0.25, num("cellSize", 1));
+    var rv = rightVector();
+    var half = width / 2;
+    for (var l = -half; l <= half; l += cs * 0.5) {
+      mark(x + rv.x * l, y + rv.y * l);
+    }
+  }
+
+  function computeOverlap() {
+    var width = Math.max(0.5, num("sprayerWidth", 5));
+    var look = Math.max(1, num("lookAhead", 8));
+    var cs = Math.max(0.25, num("cellSize", 1));
+    var fv = forwardVector();
+    var rv = rightVector();
+    var half = width / 2;
+    var total = 0;
+    var hit = 0;
+
+    for (var f = cs; f <= look; f += Math.max(cs, 1)) {
+      for (var l = -half; l <= half; l += Math.max(cs, 1)) {
+        var x = pos.x + fv.x * f + rv.x * l;
+        var y = pos.y + fv.y * f + rv.y * l;
+        total++;
+        if (covered(x, y)) hit++;
+      }
+    }
+    return total ? hit / total : 0;
+  }
+
+  function updateSprayDecision() {
+    overlap = computeOverlap();
+    var manual = el.manualMode.value;
+
+    if (manual === "on") {
+      sprayOn = true;
+      return;
+    }
+    if (manual === "off") {
+      sprayOn = false;
+      return;
+    }
+
+    var offAt = clamp(num("offAt", 80) / 100, 0, 1);
+    var onAt = clamp(num("onAt", 50) / 100, 0, 1);
+
+    if (sprayOn) {
+      if (overlap >= offAt) sprayOn = false;
+    } else {
+      if (overlap <= onAt) sprayOn = true;
+    }
+  }
+
+  function resizeCanvasForDisplay() {
+    var dpr = window.devicePixelRatio || 1;
+    var rect = el.mapCanvas.getBoundingClientRect();
+    var w = Math.max(300, Math.floor(rect.width));
+    var h = Math.max(300, Math.floor(rect.height));
+    if (el.mapCanvas.width !== Math.floor(w * dpr) || el.mapCanvas.height !== Math.floor(h * dpr)) {
+      el.mapCanvas.width = Math.floor(w * dpr);
+      el.mapCanvas.height = Math.floor(h * dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { width: w, height: h };
+  }
+
+  function worldToScreen(x, y, size) {
+    return {
+      x: size.width / 2 + (x - view.cx) * view.scale,
+      y: size.height / 2 - (y - view.cy) * view.scale
+    };
+  }
+
+  function drawGrid(size) {
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1;
+    var step = 10;
+    var left = view.cx - size.width / (2 * view.scale);
+    var right = view.cx + size.width / (2 * view.scale);
+    var bottom = view.cy - size.height / (2 * view.scale);
+    var top = view.cy + size.height / (2 * view.scale);
+
+    for (var x = Math.floor(left / step) * step; x <= right; x += step) {
+      var a = worldToScreen(x, bottom, size);
+      var b = worldToScreen(x, top, size);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    for (var y = Math.floor(bottom / step) * step; y <= top; y += step) {
+      var c = worldToScreen(left, y, size);
+      var d = worldToScreen(right, y, size);
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.stroke();
+    }
+  }
+
+  function drawCoverage(size) {
+    var cs = Math.max(0.25, num("cellSize", 1));
+    ctx.fillStyle = "rgba(40,209,124,0.55)";
+    Object.keys(coverage).forEach(function (k) {
+      var parts = k.split(",");
+      var x = parseInt(parts[0], 10) * cs;
+      var y = parseInt(parts[1], 10) * cs;
+      var s = worldToScreen(x, y + cs, size);
+      ctx.fillRect(s.x, s.y, Math.max(1, cs * view.scale), Math.max(1, cs * view.scale));
+    });
+  }
+
+  function drawLookAhead(size) {
+    var width = Math.max(0.5, num("sprayerWidth", 5));
+    var look = Math.max(1, num("lookAhead", 8));
+    var fv = forwardVector();
+    var rv = rightVector();
+    var half = width / 2;
+
+    var pts = [
+      { x: pos.x - rv.x * half, y: pos.y - rv.y * half },
+      { x: pos.x + rv.x * half, y: pos.y + rv.y * half },
+      { x: pos.x + fv.x * look + rv.x * half, y: pos.y + fv.y * look + rv.y * half },
+      { x: pos.x + fv.x * look - rv.x * half, y: pos.y + fv.y * look - rv.y * half }
+    ].map(function (p) { return worldToScreen(p.x, p.y, size); });
+
+    ctx.fillStyle = "rgba(255,191,71,0.18)";
+    ctx.strokeStyle = "rgba(255,191,71,0.95)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  function drawTriangle(size) {
+    var p = worldToScreen(pos.x, pos.y, size);
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(rad(heading));
+
+    ctx.fillStyle = "#6bb7ff";
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -16);
+    ctx.lineTo(11, 13);
+    ctx.lineTo(0, 7);
+    ctx.lineTo(-11, 13);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    var width = Math.max(0.5, num("sprayerWidth", 5));
+    var boomHalf = width * view.scale / 2;
+    ctx.strokeStyle = sprayOn ? "#28d17c" : "#ff5c5c";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-boomHalf, 20);
+    ctx.lineTo(boomHalf, 20);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function draw() {
+    var size = resizeCanvasForDisplay();
+    ctx.clearRect(0, 0, size.width, size.height);
+    ctx.fillStyle = "#0b1116";
+    ctx.fillRect(0, 0, size.width, size.height);
+    drawGrid(size);
+    drawCoverage(size);
+    drawLookAhead(size);
+    drawTriangle(size);
+  }
+
+  function updateUI() {
+    el.simStatus.textContent = moving ? "driving" : "ready";
+    el.simStatus.className = moving ? "value ok" : "value warn";
+    el.sprayStatus.textContent = sprayOn ? "ON" : "OFF";
+    el.sprayStatus.className = sprayOn ? "value on" : "value off";
+    el.overlapStatus.textContent = Math.round(overlap * 100) + "%";
+    el.speedReadout.textContent = speedMph.toFixed(1) + " mph";
+    el.headingReadout.textContent = Math.round(heading) + "°";
+    el.xReadout.textContent = pos.x.toFixed(1) + " ft";
+    el.yReadout.textContent = pos.y.toFixed(1) + " ft";
+  }
+
+  function tick() {
+    var now = Date.now();
+    var dt = Math.min(0.2, (now - lastTime) / 1000);
+    lastTime = now;
+
+    if (holdTurn !== 0) {
+      heading = (heading + holdTurn * 90 * dt + 360) % 360;
+    }
+
+    speedMph = moving ? Math.max(0, num("fakeSpeed", 3)) : 0;
+    if (moving && speedMph > 0) {
+      var fps = speedMph * 1.46667;
+      var fv = forwardVector();
+      var steps = Math.max(1, Math.ceil((fps * dt) / 0.5));
+      for (var i = 0; i < steps; i++) {
+        updateSprayDecision();
+        pos.x += fv.x * fps * dt / steps;
+        pos.y += fv.y * fps * dt / steps;
+        if (sprayOn) markSwath(pos.x, pos.y);
+      }
+    } else {
+      updateSprayDecision();
+    }
+
+    draw();
+    updateUI();
+  }
+
+  function startMoving(e) {
+    if (e) e.preventDefault();
+    moving = true;
+  }
+  function stopMoving(e) {
+    if (e) e.preventDefault();
+    moving = false;
+    holdTurn = 0;
+  }
+  function turnLeft(e) {
+    if (e) e.preventDefault();
+    heading = (heading - 15 + 360) % 360;
+  }
+  function turnRight(e) {
+    if (e) e.preventDefault();
+    heading = (heading + 15) % 360;
+  }
+
+  el.forwardBtn.onclick = startMoving;
+  el.stopBtn.onclick = stopMoving;
+  el.leftBtn.onclick = turnLeft;
+  el.rightBtn.onclick = turnRight;
+
+  el.leftBtn.addEventListener("touchstart", function (e) { e.preventDefault(); holdTurn = -1; }, { passive: false });
+  el.rightBtn.addEventListener("touchstart", function (e) { e.preventDefault(); holdTurn = 1; }, { passive: false });
+  el.leftBtn.addEventListener("touchend", function () { holdTurn = 0; });
+  el.rightBtn.addEventListener("touchend", function () { holdTurn = 0; });
+  el.leftBtn.addEventListener("mousedown", function () { holdTurn = -1; });
+  el.rightBtn.addEventListener("mousedown", function () { holdTurn = 1; });
+  window.addEventListener("mouseup", function () { holdTurn = 0; });
+
+  el.centerBtn.onclick = function () {
+    view.cx = pos.x;
+    view.cy = pos.y;
+  };
+
+  el.clearBtn.onclick = function () {
+    coverage = {};
+    sprayOn = false;
+    overlap = 0;
+  };
+
+  el.patchBtn.onclick = function () {
+    for (var x = -12; x <= 12; x += 0.5) {
+      var oldHeading = heading;
+      heading = 90;
+      markSwath(pos.x + x, pos.y + 12);
+      heading = oldHeading;
+    }
+  };
+
+  // Initial visible paint so the user should see something immediately.
+  draw();
+  updateUI();
+
+  // setInterval is less elegant than requestAnimationFrame, but it is very reliable on iPad/local HTML.
+  setInterval(tick, 50);
+})();
+</script>
+</body>
+</html>
