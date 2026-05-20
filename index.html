@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Yard Sprayer Section Control V3</title>
+<title>Yard Sprayer Section Control V4</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -57,15 +57,9 @@
     padding: 10px;
     min-height: 58px;
   }
-  .label {
-    color: #9fb0bb;
-    font-size: 12px;
-  }
-  .value {
-    font-size: 22px;
-    font-weight: 800;
-    margin-top: 3px;
-  }
+  .label { color: #9fb0bb; font-size: 12px; }
+  .value { font-size: 22px; font-weight: 800; margin-top: 3px; }
+  .smallValue { font-size: 15px; font-weight: 700; margin-top: 5px; }
   .on { color: #28d17c; }
   .off { color: #ff5c5c; }
   .warn { color: #ffbf47; }
@@ -78,42 +72,16 @@
     border-radius: 10px;
     padding: 10px;
   }
-  button {
-    min-height: 48px;
-    background: #172431;
-  }
-  button:active {
-    transform: translateY(1px);
-    background: #243548;
-  }
+  input[type="checkbox"] { width: 24px; height: 24px; accent-color: #6bb7ff; }
+  button { min-height: 48px; background: #172431; }
+  button:active { transform: translateY(1px); background: #243548; }
   .primary { background: #0f5f38; border-color: #19804e; }
   .danger { background: #5a1919; border-color: #8a2a2a; }
-  .buttons2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin: 8px 0;
-  }
-  .buttons3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin: 8px 0;
-  }
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 100px;
-    gap: 8px;
-    align-items: center;
-    margin: 8px 0;
-  }
+  .buttons2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+  .buttons3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 8px 0; }
+  .row { display: grid; grid-template-columns: 1fr 100px; gap: 8px; align-items: center; margin: 8px 0; }
   .row label { font-size: 13px; }
-  .note {
-    color: #9fb0bb;
-    font-size: 12px;
-    line-height: 1.35;
-    margin-top: 8px;
-  }
+  .note { color: #9fb0bb; font-size: 12px; line-height: 1.35; margin-top: 8px; }
   #errorBox {
     display: none;
     white-space: pre-wrap;
@@ -125,6 +93,19 @@
     margin: 8px 0;
     font-size: 12px;
   }
+  .legend {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    right: 18px;
+    background: rgba(8, 13, 18, 0.84);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 10px;
+    padding: 8px;
+    color: #c9d6de;
+    font-size: 12px;
+    pointer-events: none;
+  }
   @media (max-width: 800px) {
     .wrap { grid-template-columns: 1fr; }
     canvas { height: 58vh; min-height: 360px; }
@@ -134,114 +115,49 @@
 </head>
 <body>
 <header>
-  <h1>Yard Sprayer Section Control <span style="color:#9fb0bb;font-size:12px;">V3 iPad-safe simulator</span></h1>
-  <div class="sub">If the JavaScript tile stays “not running,” the file is being opened in a preview that blocks scripts.</div>
+  <h1>Yard Sprayer Section Control <span style="color:#9fb0bb;font-size:12px;">V4 overlap + follow map</span></h1>
+  <div class="sub">Simulator only. Use water-only testing before any real sprayer control.</div>
 </header>
 
 <div class="wrap">
   <section class="panel">
     <div id="errorBox"></div>
-
     <div class="statusGrid">
-      <div class="tile">
-        <div class="label">JavaScript</div>
-        <div id="jsStatus" class="value warn">not running</div>
-      </div>
-      <div class="tile">
-        <div class="label">Simulator</div>
-        <div id="simStatus" class="value warn">starting</div>
-      </div>
-      <div class="tile">
-        <div class="label">Sprayer Command</div>
-        <div id="sprayStatus" class="value off">OFF</div>
-      </div>
-      <div class="tile">
-        <div class="label">Overlap Ahead</div>
-        <div id="overlapStatus" class="value">0%</div>
-      </div>
+      <div class="tile"><div class="label">JavaScript</div><div id="jsStatus" class="value warn">not running</div></div>
+      <div class="tile"><div class="label">Simulator</div><div id="simStatus" class="value warn">starting</div></div>
+      <div class="tile"><div class="label">Sprayer Command</div><div id="sprayStatus" class="value off">OFF</div></div>
+      <div class="tile"><div class="label">Overlap Ahead</div><div id="overlapStatus" class="value">0%</div></div>
     </div>
 
-    <div class="buttons2">
-      <button id="forwardBtn" class="primary">Forward</button>
-      <button id="stopBtn" class="danger">Stop</button>
-    </div>
+    <div class="buttons2"><button id="forwardBtn" class="primary">Forward</button><button id="stopBtn" class="danger">Stop</button></div>
+    <div class="buttons3"><button id="leftBtn">← Left</button><button id="centerBtn">Center</button><button id="rightBtn">Right →</button></div>
+    <div class="buttons2"><button id="clearBtn">Clear Coverage</button><button id="patchBtn">Paint Test Patch</button></div>
 
-    <div class="buttons3">
-      <button id="leftBtn">← Left</button>
-      <button id="centerBtn">Center</button>
-      <button id="rightBtn">Right →</button>
-    </div>
-
-    <div class="buttons2">
-      <button id="clearBtn">Clear Coverage</button>
-      <button id="patchBtn">Paint Test Patch</button>
-    </div>
-
-    <div class="row">
-      <label for="sprayerWidth">Sprayer width, ft</label>
-      <input id="sprayerWidth" type="number" value="5" min="1" step="0.5">
-    </div>
-
-    <div class="row">
-      <label for="fakeSpeed">Fake speed, mph</label>
-      <input id="fakeSpeed" type="number" value="3" min="0" step="0.1">
-    </div>
-
-    <div class="row">
-      <label for="lookAhead">Look-ahead, ft</label>
-      <input id="lookAhead" type="number" value="8" min="1" step="1">
-    </div>
-
-    <div class="row">
-      <label for="cellSize">Grid cell, ft</label>
-      <input id="cellSize" type="number" value="1" min="0.5" step="0.5">
-    </div>
-
-    <div class="row">
-      <label for="offAt">Turn OFF overlap, %</label>
-      <input id="offAt" type="number" value="80" min="1" max="100" step="5">
-    </div>
-
-    <div class="row">
-      <label for="onAt">Turn ON below, %</label>
-      <input id="onAt" type="number" value="50" min="0" max="99" step="5">
-    </div>
-
-    <div class="row">
-      <label for="manualMode">Manual command</label>
-      <select id="manualMode">
-        <option value="auto">Auto</option>
-        <option value="on">Force ON</option>
-        <option value="off">Force OFF</option>
-      </select>
-    </div>
+    <div class="row"><label for="followMap">Map follows triangle</label><input id="followMap" type="checkbox" checked></div>
+    <div class="row"><label for="autoMode">Auto section control</label><input id="autoMode" type="checkbox" checked></div>
+    <div class="row"><label for="sprayerWidth">Sprayer width, ft</label><input id="sprayerWidth" type="number" value="5" min="1" step="0.5"></div>
+    <div class="row"><label for="fakeSpeed">Fake speed, mph</label><input id="fakeSpeed" type="number" value="3" min="0" step="0.1"></div>
+    <div class="row"><label for="lookAhead">Look-ahead, ft</label><input id="lookAhead" type="number" value="8" min="1" step="1"></div>
+    <div class="row"><label for="cellSize">Grid cell, ft</label><input id="cellSize" type="number" value="1" min="0.5" step="0.5"></div>
+    <div class="row"><label for="offAt">Turn OFF overlap, %</label><input id="offAt" type="number" value="35" min="1" max="100" step="5"></div>
+    <div class="row"><label for="onAt">Turn ON below, %</label><input id="onAt" type="number" value="15" min="0" max="99" step="5"></div>
+    <div class="row"><label for="manualMode">Manual command</label><select id="manualMode"><option value="auto">Auto</option><option value="on">Force ON</option><option value="off">Force OFF</option></select></div>
 
     <div class="statusGrid" style="margin-top:10px;">
-      <div class="tile">
-        <div class="label">Speed</div>
-        <div id="speedReadout" class="value">0.0 mph</div>
-      </div>
-      <div class="tile">
-        <div class="label">Heading</div>
-        <div id="headingReadout" class="value">0°</div>
-      </div>
-      <div class="tile">
-        <div class="label">X</div>
-        <div id="xReadout" class="value">0 ft</div>
-      </div>
-      <div class="tile">
-        <div class="label">Y</div>
-        <div id="yReadout" class="value">0 ft</div>
-      </div>
+      <div class="tile"><div class="label">Speed</div><div id="speedReadout" class="smallValue">0.0 mph</div></div>
+      <div class="tile"><div class="label">Heading</div><div id="headingReadout" class="smallValue">0°</div></div>
+      <div class="tile"><div class="label">X</div><div id="xReadout" class="smallValue">0 ft</div></div>
+      <div class="tile"><div class="label">Y</div><div id="yReadout" class="smallValue">0 ft</div></div>
+      <div class="tile"><div class="label">Cells sprayed</div><div id="cellsReadout" class="smallValue">0</div></div>
+      <div class="tile"><div class="label">Last decision</div><div id="decisionReadout" class="smallValue">—</div></div>
     </div>
 
-    <div class="note">
-      Test: tap <b>Forward</b>. The blue triangle should move and paint green coverage. Tap or hold Left/Right to steer. Driving back across green coverage should switch the command OFF.
-    </div>
+    <div class="note">V4 changes: the map follows the blue triangle by default. The overlap shutoff is more sensitive: OFF at 35% overlap, back ON below 15%. To test, drive forward, loop around, and drive back over the green strip.</div>
   </section>
 
   <section class="mapPanel">
     <canvas id="mapCanvas" width="900" height="600"></canvas>
+    <div class="legend">Green = sprayed coverage. Blue = sprayer. Yellow = look-ahead detection box. Red boom = command OFF. Green boom = command ON.</div>
   </section>
 </div>
 
@@ -254,8 +170,9 @@
   var el = {};
   [
     "jsStatus","simStatus","sprayStatus","overlapStatus","forwardBtn","stopBtn","leftBtn","rightBtn",
-    "centerBtn","clearBtn","patchBtn","sprayerWidth","fakeSpeed","lookAhead","cellSize","offAt","onAt",
-    "manualMode","speedReadout","headingReadout","xReadout","yReadout","mapCanvas","errorBox"
+    "centerBtn","clearBtn","patchBtn","followMap","autoMode","sprayerWidth","fakeSpeed","lookAhead",
+    "cellSize","offAt","onAt","manualMode","speedReadout","headingReadout","xReadout","yReadout",
+    "cellsReadout","decisionReadout","mapCanvas","errorBox"
   ].forEach(function (id) { el[id] = byId(id); });
 
   window.onerror = function (message, source, lineno, colno) {
@@ -267,17 +184,20 @@
   el.jsStatus.className = "value ok";
 
   var ctx = el.mapCanvas.getContext("2d");
-
   var pos = { x: 0, y: 0 };
-  var heading = 0; // 0 north/up, 90 east/right
+  var heading = 0;
   var moving = false;
   var holdTurn = 0;
   var speedMph = 0;
   var sprayOn = false;
   var overlap = 0;
   var coverage = {};
+  var coverageCount = 0;
   var view = { cx: 0, cy: 0, scale: 8 };
   var lastTime = Date.now();
+  var lastDecision = "ready";
+  var panActive = false;
+  var lastPan = null;
 
   function num(id, fallback) {
     var v = parseFloat(el[id].value);
@@ -287,16 +207,18 @@
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
   function rad(deg) { return deg * Math.PI / 180; }
 
-  function forwardVector() {
-    var r = rad(heading);
+  function forwardVectorFor(deg) {
+    var r = rad(deg);
     return { x: Math.sin(r), y: Math.cos(r) };
   }
 
-  function rightVector() {
-    var r = rad(heading);
+  function rightVectorFor(deg) {
+    var r = rad(deg);
     return { x: Math.cos(r), y: -Math.sin(r) };
   }
 
+  function forwardVector() { return forwardVectorFor(heading); }
+  function rightVector() { return rightVectorFor(heading); }
   function key(ix, iy) { return ix + "," + iy; }
 
   function cellAt(x, y) {
@@ -304,9 +226,12 @@
     return { ix: Math.floor(x / cs), iy: Math.floor(y / cs) };
   }
 
-  function mark(x, y) {
-    var c = cellAt(x, y);
-    coverage[key(c.ix, c.iy)] = true;
+  function markCell(ix, iy) {
+    var k = key(ix, iy);
+    if (!coverage[k]) {
+      coverage[k] = true;
+      coverageCount++;
+    }
   }
 
   function covered(x, y) {
@@ -314,13 +239,31 @@
     return !!coverage[key(c.ix, c.iy)];
   }
 
-  function markSwath(x, y) {
+  function markFilledCircle(x, y, radiusFt) {
+    var cs = Math.max(0.25, num("cellSize", 1));
+    var c = cellAt(x, y);
+    var rCells = Math.ceil(radiusFt / cs);
+    var radius2 = radiusFt * radiusFt;
+    var ix, iy, cx, cy, dx, dy;
+    for (ix = c.ix - rCells; ix <= c.ix + rCells; ix++) {
+      for (iy = c.iy - rCells; iy <= c.iy + rCells; iy++) {
+        cx = (ix + 0.5) * cs;
+        cy = (iy + 0.5) * cs;
+        dx = cx - x;
+        dy = cy - y;
+        if (dx * dx + dy * dy <= radius2) markCell(ix, iy);
+      }
+    }
+  }
+
+  function markSwathAt(x, y, deg) {
     var width = Math.max(0.5, num("sprayerWidth", 5));
     var cs = Math.max(0.25, num("cellSize", 1));
-    var rv = rightVector();
+    var rv = rightVectorFor(deg);
     var half = width / 2;
-    for (var l = -half; l <= half; l += cs * 0.5) {
-      mark(x + rv.x * l, y + rv.y * l);
+    var l;
+    for (l = -half; l <= half; l += cs * 0.5) {
+      markFilledCircle(x + rv.x * l, y + rv.y * l, cs * 0.65);
     }
   }
 
@@ -333,11 +276,11 @@
     var half = width / 2;
     var total = 0;
     var hit = 0;
-
-    for (var f = cs; f <= look; f += Math.max(cs, 1)) {
-      for (var l = -half; l <= half; l += Math.max(cs, 1)) {
-        var x = pos.x + fv.x * f + rv.x * l;
-        var y = pos.y + fv.y * f + rv.y * l;
+    var f, l, x, y;
+    for (f = 0; f <= look; f += Math.max(cs * 0.75, 0.75)) {
+      for (l = -half; l <= half; l += Math.max(cs * 0.75, 0.75)) {
+        x = pos.x + fv.x * f + rv.x * l;
+        y = pos.y + fv.y * f + rv.y * l;
         total++;
         if (covered(x, y)) hit++;
       }
@@ -347,24 +290,22 @@
 
   function updateSprayDecision() {
     overlap = computeOverlap();
-    var manual = el.manualMode.value;
-
-    if (manual === "on") {
-      sprayOn = true;
-      return;
-    }
-    if (manual === "off") {
+    if (!el.autoMode.checked) {
       sprayOn = false;
+      lastDecision = "auto disabled";
       return;
     }
-
-    var offAt = clamp(num("offAt", 80) / 100, 0, 1);
-    var onAt = clamp(num("onAt", 50) / 100, 0, 1);
-
+    var manual = el.manualMode.value;
+    if (manual === "on") { sprayOn = true; lastDecision = "manual ON"; return; }
+    if (manual === "off") { sprayOn = false; lastDecision = "manual OFF"; return; }
+    var offAt = clamp(num("offAt", 35) / 100, 0, 1);
+    var onAt = clamp(num("onAt", 15) / 100, 0, 1);
     if (sprayOn) {
-      if (overlap >= offAt) sprayOn = false;
+      if (overlap >= offAt) { sprayOn = false; lastDecision = "OFF: overlap"; }
+      else { lastDecision = "ON: clear"; }
     } else {
-      if (overlap <= onAt) sprayOn = true;
+      if (overlap <= onAt) { sprayOn = true; lastDecision = "ON: new ground"; }
+      else { lastDecision = "OFF: already sprayed"; }
     }
   }
 
@@ -382,10 +323,7 @@
   }
 
   function worldToScreen(x, y, size) {
-    return {
-      x: size.width / 2 + (x - view.cx) * view.scale,
-      y: size.height / 2 - (y - view.cy) * view.scale
-    };
+    return { x: size.width / 2 + (x - view.cx) * view.scale, y: size.height / 2 - (y - view.cy) * view.scale };
   }
 
   function drawGrid(size) {
@@ -396,27 +334,36 @@
     var right = view.cx + size.width / (2 * view.scale);
     var bottom = view.cy - size.height / (2 * view.scale);
     var top = view.cy + size.height / (2 * view.scale);
-
-    for (var x = Math.floor(left / step) * step; x <= right; x += step) {
-      var a = worldToScreen(x, bottom, size);
-      var b = worldToScreen(x, top, size);
+    var x, y, a, b;
+    for (x = Math.floor(left / step) * step; x <= right; x += step) {
+      a = worldToScreen(x, bottom, size); b = worldToScreen(x, top, size);
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
-    for (var y = Math.floor(bottom / step) * step; y <= top; y += step) {
-      var c = worldToScreen(left, y, size);
-      var d = worldToScreen(right, y, size);
-      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.stroke();
+    for (y = Math.floor(bottom / step) * step; y <= top; y += step) {
+      a = worldToScreen(left, y, size); b = worldToScreen(right, y, size);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     }
+    ctx.strokeStyle = "rgba(255,255,255,0.22)";
+    a = worldToScreen(left, 0, size); b = worldToScreen(right, 0, size);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    a = worldToScreen(0, bottom, size); b = worldToScreen(0, top, size);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   }
 
   function drawCoverage(size) {
     var cs = Math.max(0.25, num("cellSize", 1));
+    var left = view.cx - size.width / (2 * view.scale) - cs;
+    var right = view.cx + size.width / (2 * view.scale) + cs;
+    var bottom = view.cy - size.height / (2 * view.scale) - cs;
+    var top = view.cy + size.height / (2 * view.scale) + cs;
     ctx.fillStyle = "rgba(40,209,124,0.55)";
     Object.keys(coverage).forEach(function (k) {
       var parts = k.split(",");
       var x = parseInt(parts[0], 10) * cs;
       var y = parseInt(parts[1], 10) * cs;
-      var s = worldToScreen(x, y + cs, size);
+      var s;
+      if (x < left || x > right || y < bottom || y > top) return;
+      s = worldToScreen(x, y + cs, size);
       ctx.fillRect(s.x, s.y, Math.max(1, cs * view.scale), Math.max(1, cs * view.scale));
     });
   }
@@ -427,23 +374,18 @@
     var fv = forwardVector();
     var rv = rightVector();
     var half = width / 2;
-
     var pts = [
       { x: pos.x - rv.x * half, y: pos.y - rv.y * half },
       { x: pos.x + rv.x * half, y: pos.y + rv.y * half },
       { x: pos.x + fv.x * look + rv.x * half, y: pos.y + fv.y * look + rv.y * half },
       { x: pos.x + fv.x * look - rv.x * half, y: pos.y + fv.y * look - rv.y * half }
     ].map(function (p) { return worldToScreen(p.x, p.y, size); });
-
     ctx.fillStyle = "rgba(255,191,71,0.18)";
     ctx.strokeStyle = "rgba(255,191,71,0.95)";
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
     for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
   }
 
   function drawTriangle(size) {
@@ -451,40 +393,27 @@
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(rad(heading));
-
     ctx.fillStyle = "#6bb7ff";
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, -16);
-    ctx.lineTo(11, 13);
-    ctx.lineTo(0, 7);
-    ctx.lineTo(-11, 13);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
+    ctx.moveTo(0, -16); ctx.lineTo(11, 13); ctx.lineTo(0, 7); ctx.lineTo(-11, 13);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
     var width = Math.max(0.5, num("sprayerWidth", 5));
     var boomHalf = width * view.scale / 2;
     ctx.strokeStyle = sprayOn ? "#28d17c" : "#ff5c5c";
     ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(-boomHalf, 20);
-    ctx.lineTo(boomHalf, 20);
-    ctx.stroke();
-
+    ctx.beginPath(); ctx.moveTo(-boomHalf, 20); ctx.lineTo(boomHalf, 20); ctx.stroke();
     ctx.restore();
   }
 
   function draw() {
     var size = resizeCanvasForDisplay();
+    if (el.followMap.checked && !panActive) { view.cx = pos.x; view.cy = pos.y; }
     ctx.clearRect(0, 0, size.width, size.height);
     ctx.fillStyle = "#0b1116";
     ctx.fillRect(0, 0, size.width, size.height);
-    drawGrid(size);
-    drawCoverage(size);
-    drawLookAhead(size);
-    drawTriangle(size);
+    drawGrid(size); drawCoverage(size); drawLookAhead(size); drawTriangle(size);
   }
 
   function updateUI() {
@@ -497,59 +426,47 @@
     el.headingReadout.textContent = Math.round(heading) + "°";
     el.xReadout.textContent = pos.x.toFixed(1) + " ft";
     el.yReadout.textContent = pos.y.toFixed(1) + " ft";
+    el.cellsReadout.textContent = String(coverageCount);
+    el.decisionReadout.textContent = lastDecision;
+  }
+
+  function stepMovement(dt) {
+    var fps = speedMph * 1.46667;
+    var distance = fps * dt;
+    var steps = Math.max(1, Math.ceil(distance / 0.5));
+    var i, fv;
+    for (i = 0; i < steps; i++) {
+      if (holdTurn !== 0) heading = (heading + holdTurn * 90 * (dt / steps) + 360) % 360;
+      updateSprayDecision();
+      fv = forwardVector();
+      pos.x += fv.x * distance / steps;
+      pos.y += fv.y * distance / steps;
+      if (sprayOn) markSwathAt(pos.x, pos.y, heading);
+    }
   }
 
   function tick() {
     var now = Date.now();
     var dt = Math.min(0.2, (now - lastTime) / 1000);
     lastTime = now;
-
-    if (holdTurn !== 0) {
-      heading = (heading + holdTurn * 90 * dt + 360) % 360;
-    }
-
     speedMph = moving ? Math.max(0, num("fakeSpeed", 3)) : 0;
-    if (moving && speedMph > 0) {
-      var fps = speedMph * 1.46667;
-      var fv = forwardVector();
-      var steps = Math.max(1, Math.ceil((fps * dt) / 0.5));
-      for (var i = 0; i < steps; i++) {
-        updateSprayDecision();
-        pos.x += fv.x * fps * dt / steps;
-        pos.y += fv.y * fps * dt / steps;
-        if (sprayOn) markSwath(pos.x, pos.y);
-      }
-    } else {
+    if (moving && speedMph > 0) stepMovement(dt);
+    else {
+      if (holdTurn !== 0) heading = (heading + holdTurn * 90 * dt + 360) % 360;
       updateSprayDecision();
     }
-
-    draw();
-    updateUI();
+    draw(); updateUI();
   }
 
-  function startMoving(e) {
-    if (e) e.preventDefault();
-    moving = true;
-  }
-  function stopMoving(e) {
-    if (e) e.preventDefault();
-    moving = false;
-    holdTurn = 0;
-  }
-  function turnLeft(e) {
-    if (e) e.preventDefault();
-    heading = (heading - 15 + 360) % 360;
-  }
-  function turnRight(e) {
-    if (e) e.preventDefault();
-    heading = (heading + 15) % 360;
-  }
+  function startMoving(e) { if (e) e.preventDefault(); moving = true; }
+  function stopMoving(e) { if (e) e.preventDefault(); moving = false; holdTurn = 0; }
+  function turnLeft(e) { if (e) e.preventDefault(); heading = (heading - 15 + 360) % 360; }
+  function turnRight(e) { if (e) e.preventDefault(); heading = (heading + 15) % 360; }
 
   el.forwardBtn.onclick = startMoving;
   el.stopBtn.onclick = stopMoving;
   el.leftBtn.onclick = turnLeft;
   el.rightBtn.onclick = turnRight;
-
   el.leftBtn.addEventListener("touchstart", function (e) { e.preventDefault(); holdTurn = -1; }, { passive: false });
   el.rightBtn.addEventListener("touchstart", function (e) { e.preventDefault(); holdTurn = 1; }, { passive: false });
   el.leftBtn.addEventListener("touchend", function () { holdTurn = 0; });
@@ -558,32 +475,32 @@
   el.rightBtn.addEventListener("mousedown", function () { holdTurn = 1; });
   window.addEventListener("mouseup", function () { holdTurn = 0; });
 
-  el.centerBtn.onclick = function () {
-    view.cx = pos.x;
-    view.cy = pos.y;
-  };
-
-  el.clearBtn.onclick = function () {
-    coverage = {};
-    sprayOn = false;
-    overlap = 0;
-  };
-
+  el.centerBtn.onclick = function () { view.cx = pos.x; view.cy = pos.y; el.followMap.checked = true; };
+  el.clearBtn.onclick = function () { coverage = {}; coverageCount = 0; sprayOn = false; overlap = 0; lastDecision = "coverage cleared"; };
   el.patchBtn.onclick = function () {
-    for (var x = -12; x <= 12; x += 0.5) {
-      var oldHeading = heading;
-      heading = 90;
-      markSwath(pos.x + x, pos.y + 12);
-      heading = oldHeading;
-    }
+    var x;
+    for (x = -12; x <= 12; x += 0.5) markSwathAt(pos.x + x, pos.y + 12, 90);
   };
 
-  // Initial visible paint so the user should see something immediately.
-  draw();
-  updateUI();
+  el.mapCanvas.addEventListener("touchstart", function (e) {
+    if (e.touches.length !== 1) return;
+    panActive = true;
+    el.followMap.checked = false;
+    lastPan = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+  el.mapCanvas.addEventListener("touchmove", function (e) {
+    var t, dx, dy;
+    if (!lastPan || e.touches.length !== 1) return;
+    t = e.touches[0];
+    dx = t.clientX - lastPan.x;
+    dy = t.clientY - lastPan.y;
+    view.cx -= dx / view.scale;
+    view.cy += dy / view.scale;
+    lastPan = { x: t.clientX, y: t.clientY };
+  }, { passive: true });
+  el.mapCanvas.addEventListener("touchend", function () { panActive = false; lastPan = null; }, { passive: true });
 
-  // setInterval is less elegant than requestAnimationFrame, but it is very reliable on iPad/local HTML.
-  setInterval(tick, 50);
+  draw(); updateUI(); setInterval(tick, 50);
 })();
 </script>
 </body>
